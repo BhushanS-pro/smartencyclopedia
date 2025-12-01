@@ -1,51 +1,112 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Add Article</title>
-
-<style>
-  body { font-family: Arial; margin: 0; padding: 20px; background: #f9f9f9; }
-  h2 { text-align: center; }
-  .form { max-width: 600px; margin: auto; background: #fff; padding: 20px; border-radius: 8px; border: 1px solid #ddd; }
-  input, textarea { width: 100%; padding: 10px; margin: 8px 0; border-radius: 6px; border: 1px solid #ccc; }
-  button { padding: 12px; width: 100%; background: #0066cc; color: #fff; border: none; border-radius: 6px; cursor: pointer; }
-  button:hover { background: #004a99; }
-</style>
+  <meta charset="UTF-8" />
+  <title>Add Article – Smart Encyclopedia</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    body { font-family: Arial, sans-serif; background:#f3f4f6; margin:0; }
+    header { background:#111827; color:#f9fafb; padding:14px 18px; }
+    header h1 { margin:0; font-size:20px; }
+    header a { color:#93c5fd; text-decoration:none; font-size:13px; }
+    .container { max-width:800px; margin:20px auto; background:#fff; padding:20px;
+                 border-radius:10px; box-shadow:0 8px 25px rgba(15,23,42,.06); }
+    label { display:block; margin-top:10px; font-size:14px; }
+    input, textarea {
+      width:100%; padding:9px; margin-top:4px; border-radius:6px;
+      border:1px solid #d1d5db; font-size:14px;
+    }
+    textarea { resize:vertical; min-height:140px; }
+    button {
+      margin-top:16px; padding:10px 16px; border-radius:6px; border:none;
+      background:#2563eb; color:#fff; font-size:15px; cursor:pointer;
+    }
+    button:hover { background:#1d4ed8; }
+    .msg { margin-top:12px; font-size:14px; }
+    .msg.success { color:#15803d; }
+    .msg.error { color:#b91c1c; }
+  </style>
 </head>
-
 <body>
 
-<h2>Add New Article</h2>
+<script>
+  // 🔐 simple client-side guard: if not logged in, redirect
+  if (localStorage.getItem("smartencyclopedia_admin") !== "1") {
+    window.location.href = "login.html";
+  }
+</script>
 
-<div class="form">
-  <input type="text" id="title" placeholder="Title" required>
-  <input type="text" id="slug" placeholder="Slug (unique)" required>
-  <input type="text" id="category" placeholder="Category">
-  <input type="text" id="image_url" placeholder="Image URL (optional)">
-  <textarea id="content" rows="10" placeholder="Content" required></textarea>
-  <button onclick="submitArticle()">Submit Article</button>
+<header>
+  <h1>Smart Encyclopedia – Admin</h1>
+  <a href="index.html">&larr; Back to site</a>
+</header>
+
+<div class="container">
+  <h2>Create New Article</h2>
+  <form id="article-form">
+    <label>Title
+      <input type="text" id="title" required />
+    </label>
+
+    <label>Slug (URL, e.g. black-holes-explained)
+      <input type="text" id="slug" required />
+    </label>
+
+    <label>Category (e.g. Science, History, Space)
+      <input type="text" id="category" />
+    </label>
+
+    <label>Image URL (optional)
+      <input type="text" id="image_url" />
+    </label>
+
+    <label>Content (HTML or plain text)
+      <textarea id="content" required></textarea>
+    </label>
+
+    <button type="submit">Publish Article</button>
+    <div id="message" class="msg"></div>
+  </form>
 </div>
 
 <script>
-async function submitArticle() {
-  const article = {
-    title: document.getElementById("title").value,
-    slug: document.getElementById("slug").value,
-    category: document.getElementById("category").value,
-    image_url: document.getElementById("image_url").value,
-    content: document.getElementById("content").value
-  };
+  const API_BASE = "https://smartencyclopedia.pages.dev";
 
-  const res = await fetch("https://YOUR-WORKER.workers.dev/api/add-article", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(article)
+  document.getElementById("article-form").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const msg = document.getElementById("message");
+    msg.textContent = "";
+    msg.className = "msg";
+
+    const payload = {
+      title: document.getElementById("title").value.trim(),
+      slug: document.getElementById("slug").value.trim(),
+      category: document.getElementById("category").value.trim(),
+      image_url: document.getElementById("image_url").value.trim(),
+      content: document.getElementById("content").value.trim()
+    };
+
+    try {
+      const res = await fetch(`${API_BASE}/api/add-article`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+
+      if (!res.ok) {
+        throw new Error(await res.text());
+      }
+
+      msg.textContent = "Article added successfully!";
+      msg.className = "msg success";
+
+      // Optional: clear form
+      e.target.reset();
+    } catch (err) {
+      msg.textContent = "Error: " + err.message;
+      msg.className = "msg error";
+    }
   });
-
-  alert(await res.text());
-}
 </script>
 
 </body>
