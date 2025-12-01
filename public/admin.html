@@ -4,9 +4,18 @@
   <meta charset="UTF-8" />
   <title>Add Article – Smart Encyclopedia</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <script>
+    // 🔐 Block access BEFORE page loads
+    if (localStorage.getItem("smartencyclopedia_admin") !== "1") {
+      window.location.replace("login.html");
+    }
+  </script>
+
   <style>
     body { font-family: Arial, sans-serif; background:#f3f4f6; margin:0; }
-    header { background:#111827; color:#f9fafb; padding:14px 18px; display:flex; justify-content:space-between; align-items:center; }
+    header { background:#111827; color:#f9fafb; padding:14px 18px;
+             display:flex; justify-content:space-between; align-items:center; }
     header h1 { margin:0; font-size:20px; }
     header a { color:#93c5fd; text-decoration:none; font-size:13px; }
     .container { max-width:800px; margin:20px auto; background:#fff; padding:20px;
@@ -25,43 +34,44 @@
     .msg { margin-top:12px; font-size:14px; }
     .msg.success { color:#15803d; }
     .msg.error { color:#b91c1c; }
+    .logout-btn {
+      background:#b91c1c;
+      margin-left:10px;
+    }
+    .logout-btn:hover { background:#991b1b; }
   </style>
 </head>
 <body>
 
-<script>
-  // 🔐 Block access unless logged in
-  if (localStorage.getItem("smartencyclopedia_admin") !== "1") {
-    window.location.href = "login.html";
-  }
-</script>
-
 <header>
   <h1>Smart Encyclopedia – Admin</h1>
-  <a href="index.html">← Back to site</a>
+  <div>
+    <a href="index.html">← Back to site</a>
+    <button class="logout-btn" onclick="logout()">Logout</button>
+  </div>
 </header>
 
 <div class="container">
   <h2>Create New Article</h2>
   <form id="article-form">
-    
+
     <label>Title
       <input type="text" id="title" required />
     </label>
 
-    <label>Slug (URL e.g. climate-change-explained)
+    <label>Slug (URL e.g. solar-eclipse)
       <input type="text" id="slug" required />
     </label>
 
     <label>Category
-      <input type="text" id="category" placeholder="Science / Space / Tech / History etc." required />
+      <input type="text" id="category" placeholder="Science / Space / Tech / History" required />
     </label>
 
-    <label>Image URL (optional)
+    <label>Image URL
       <input type="text" id="image_url" placeholder="https://example.com/image.jpg" />
     </label>
 
-    <label>Content (HTML or plain text)
+    <label>Content
       <textarea id="content" required></textarea>
     </label>
 
@@ -71,18 +81,23 @@
 </div>
 
 <script>
-  const API_BASE = ""; // ← works on both staging & production domains
+  const API_BASE = "";
+
+  function logout() {
+    localStorage.removeItem("smartencyclopedia_admin");
+    window.location.replace("login.html");
+  }
 
   document.getElementById("article-form").addEventListener("submit", async (e) => {
     e.preventDefault();
-
     const msg = document.getElementById("message");
+
     msg.textContent = "Publishing...";
     msg.className = "msg";
 
     const payload = {
       title: document.getElementById("title").value.trim(),
-      slug: document.getElementById("slug").value.trim().toLowerCase().replace(/\s+/g, '-'),
+      slug: document.getElementById("slug").value.trim().toLowerCase().replace(/\s+/g, "-"),
       category: document.getElementById("category").value.trim(),
       image_url: document.getElementById("image_url").value.trim(),
       content: document.getElementById("content").value.trim()
@@ -92,15 +107,13 @@
       const res = await fetch(`${API_BASE}/api/add-article`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload)
+        body: JSON.stringify(payload),
       });
 
       if (!res.ok) throw new Error(await res.text());
 
       msg.textContent = "🎉 Article added successfully!";
       msg.className = "msg success";
-
-      // Reset form
       e.target.reset();
 
     } catch (err) {
