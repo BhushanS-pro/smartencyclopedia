@@ -1,57 +1,83 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Article</title>
-
+  <meta charset="UTF-8" />
+  <title>Article – Smart Encyclopedia</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
-    body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #ffffff; }
-    header { background: #fff; padding: 15px; text-align: center; font-size: 22px; border-bottom: 1px solid #ddd; }
-    .container { max-width: 900px; margin: auto; padding: 20px; }
-    img { max-width: 100%; border-radius: 6px; margin-bottom: 15px; }
-    a { color: #0066cc; }
+    body { margin:0; font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background:#f3f4f6; color:#111827; }
+    header { background:#ffffff; border-bottom:1px solid #e5e7eb; padding:12px 18px; display:flex; justify-content:space-between; align-items:center; position:sticky; top:0; z-index:20; }
+    .brand { font-weight:700; font-size:20px; }
+    nav a { margin-left:16px; text-decoration:none; font-size:14px; color:#6b7280; }
+    nav a:hover { color:#2563eb; }
+    .container { max-width:840px; margin:18px auto 30px; padding:0 12px; }
+    .meta { font-size:13px; color:#6b7280; margin-bottom:8px; }
+    .hero-img { width:100%; max-height:320px; object-fit:cover; border-radius:12px; margin:10px 0 14px; background:#e5e7eb; }
+    h1 { font-size:24px; margin:0 0 6px; }
+    article { background:#ffffff; border-radius:12px; padding:16px 16px 20px; box-shadow:0 8px 24px rgba(15,23,42,0.06); }
+    article p { line-height:1.6; font-size:15px; }
+    article h2 { margin-top:18px; font-size:18px; }
   </style>
 </head>
-
 <body>
+<header>
+  <div class="brand">Smart Encyclopedia</div>
+  <nav>
+    <a href="index.html">Home</a>
+    <a href="categories.html">Categories</a>
+    <a href="about.html">About</a>
+    <a href="contact.html">Contact</a>
+  </nav>
+</header>
 
-<header><a href="index.html">← Back</a></header>
-
-<div class="container">
-  <h1 id="title"></h1>
-  <small id="date"></small>
-  <img id="image" style="display:none;">
-  <div id="content" style="margin-top:20px;"></div>
-</div>
+<main class="container">
+  <article id="article">
+    <p>Loading article...</p>
+  </article>
+</main>
 
 <script>
-const slug = new URLSearchParams(window.location.search).get("slug");
-const API = `https://YOUR-WORKER.workers.dev/api/article/${slug}`;
+  const API_BASE = window.location.origin;
+  const params = new URLSearchParams(window.location.search);
+  const slug = params.get("slug");
+  const articleEl = document.getElementById("article");
 
-async function loadArticle() {
-  const res = await fetch(API);
-  const article = await res.json();
-
-  if (!article || !article.title) {
-    document.body.innerHTML = "<p>Article not found.</p>";
-    return;
+  if (!slug) {
+    articleEl.innerHTML = "<p>Article not found (missing slug).</p>";
+  } else {
+    loadArticle(slug);
   }
 
-  document.getElementById("title").innerText = article.title;
-  document.getElementById("date").innerText = new Date(article.created_at).toDateString();
+  async function loadArticle(slug) {
+    try {
+      const res = await fetch(`${API_BASE}/api/article/${encodeURIComponent(slug)}`);
+      const article = await res.json();
+      if (!article || !article.title) {
+        articleEl.innerHTML = "<p>Article not found.</p>";
+        return;
+      }
+      const date = article.created_at ? new Date(article.created_at).toDateString() : "";
+      const img = article.image_url || "https://via.placeholder.com/800x400.png?text=Smart+Encyclopedia";
 
-  // If image URL exists
-  if (article.image_url) {
-    document.getElementById("image").src = article.image_url;
-    document.getElementById("image").style.display = "block";
+      document.title = article.title + " – Smart Encyclopedia";
+
+      articleEl.innerHTML = `
+        <div class="meta">${article.category || "General"} • ${date}</div>
+        <h1>${escapeHtml(article.title)}</h1>
+        <img src="${img}" alt="${escapeHtml(article.title)}" class="hero-img" />
+        <div class="meta">Smart Encyclopedia · Simple explanations, every day.</div>
+        <div class="body">${article.content || ""}</div>
+      `;
+    } catch (e) {
+      articleEl.innerHTML = "<p>Error loading article.</p>";
+    }
   }
 
-  document.getElementById("content").innerHTML = article.content;
-}
-
-loadArticle();
+  function escapeHtml(str) {
+    return String(str || "").replace(/[&<>"]/g, c => (
+      { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]
+    ));
+  }
 </script>
-
 </body>
 </html>
