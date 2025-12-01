@@ -4,29 +4,32 @@
   <meta charset="UTF-8" />
   <title>Categories – Smart Encyclopedia</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="Browse educational articles on Smart Encyclopedia by category." />
   <style>
-    body { margin:0; font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background:#f3f4f6; color:#111827; }
-    header { background:#ffffff; border-bottom:1px solid #e5e7eb; padding:12px 18px; display:flex; justify-content:space-between; align-items:center; }
-    .brand { font-weight:700; font-size:20px; }
-    nav a { margin-left:16px; text-decoration:none; font-size:14px; color:#6b7280; }
-    nav a:hover { color:#2563eb; }
-    .container { max-width:1040px; margin:18px auto 30px; padding:0 12px; }
-    h1 { font-size:22px; margin:0 0 10px; }
-    .cat-list { display:flex; flex-wrap:wrap; gap:8px; margin:10px 0 18px; }
-    .cat-pill {
-      padding:6px 10px; border-radius:999px; border:1px solid #d1d5db;
-      background:#ffffff; font-size:13px; cursor:pointer; color:#374151;
-    }
-    .cat-pill.active { background:#2563eb; color:#ffffff; border-color:#2563eb; }
-    .cards { display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); gap:14px; }
-    .card { background:#ffffff; border-radius:10px; padding:10px 10px 12px; text-decoration:none; color:inherit; box-shadow:0 8px 24px rgba(15,23,42,0.06); }
-    .card-title { font-size:15px; font-weight:600; margin-bottom:4px; }
-    .card-meta { font-size:11px; color:#6b7280; }
+    body { margin:0; font-family: Arial, sans-serif; background:#f3f4f6; color:#111827; }
+    header { background:#111827; color:#f9fafb; padding:14px 18px; display:flex; justify-content:space-between; align-items:center; }
+    .logo { font-weight:bold; font-size:20px; }
+    nav a { color:#e5e7eb; margin-left:16px; text-decoration:none; font-size:14px; }
+    nav a:hover { text-decoration:underline; }
+    .container { max-width:1000px; margin:20px auto; padding:0 16px; }
+    h1 { font-size:22px; margin-bottom:8px; }
+    .subtitle { font-size:14px; color:#6b7280; margin-bottom:16px; }
+    select { padding:8px 10px; border-radius:6px; border:1px solid #d1d5db; font-size:14px; margin-bottom:16px; }
+    .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:18px; }
+    .card { background:#fff; border-radius:10px; padding:12px; box-shadow:0 6px 16px rgba(15,23,42,.08); }
+    .card h2 { font-size:16px; margin:0 0 6px; }
+    .card p { font-size:13px; color:#4b5563; margin:0 0 8px; }
+    .card small { font-size:12px; color:#9ca3af; }
+    .card a { font-size:13px; color:#2563eb; text-decoration:none; }
+    .card a:hover { text-decoration:underline; }
+    footer { margin-top:24px; padding:14px 18px; font-size:13px; color:#6b7280; text-align:center; }
+    footer a { color:#2563eb; text-decoration:none; margin:0 4px; }
+    footer a:hover { text-decoration:underline; }
   </style>
 </head>
 <body>
 <header>
-  <div class="brand">Smart Encyclopedia</div>
+  <div class="logo"><a href="index.html" style="color:#f9fafb;text-decoration:none;">Smart Encyclopedia</a></div>
   <nav>
     <a href="index.html">Home</a>
     <a href="categories.html">Categories</a>
@@ -36,69 +39,78 @@
 </header>
 
 <main class="container">
-  <h1>Categories</h1>
-  <div id="cat-list" class="cat-list"></div>
-  <div id="articles" class="cards"></div>
+  <h1>Browse by Category</h1>
+  <div class="subtitle">Select a category to view related articles.</div>
+
+  <label>
+    Category:
+    <select id="category-select"></select>
+  </label>
+
+  <section class="grid" id="category-articles">
+    <!-- filtered cards here -->
+  </section>
 </main>
 
+<footer>
+  &copy; <span id="year"></span> Smart Encyclopedia.
+  <a href="privacy.html">Privacy Policy</a>·
+  <a href="terms.html">Terms</a>·
+  <a href="contact.html">Contact</a>
+</footer>
+
 <script>
-  const API_BASE = window.location.origin;
-  const catListEl = document.getElementById("cat-list");
-  const articlesEl = document.getElementById("articles");
+  document.getElementById("year").textContent = new Date().getFullYear();
+
+  const params = new URLSearchParams(window.location.search);
+  const initialCategory = params.get("category");
+
   let allArticles = [];
-  let activeCategory = "All";
 
   async function init() {
-    try {
-      const res = await fetch(API_BASE + "/api/articles");
-      const data = await res.json();
-      allArticles = Array.isArray(data) ? data : [];
-      buildCategories();
-      renderArticles();
-    } catch (e) {
-      articlesEl.innerHTML = "<p>Unable to load articles.</p>";
+    const res = await fetch("/api/articles");
+    const data = await res.json();
+    allArticles = data || [];
+
+    const select = document.getElementById("category-select");
+    const cats = [...new Set(allArticles.map(a => a.category || "General"))].sort();
+    select.innerHTML = cats.map(c => `<option value="${c}">${c}</option>`).join("");
+
+    if (initialCategory && cats.includes(initialCategory)) {
+      select.value = initialCategory;
     }
+
+    select.addEventListener("change", () => renderCategory(select.value));
+    renderCategory(select.value || cats[0]);
   }
 
-  function buildCategories() {
-    const cats = new Set(["All"]);
-    allArticles.forEach(a => { if (a.category) cats.add(a.category); });
-    catListEl.innerHTML = "";
-    cats.forEach(cat => {
-      const btn = document.createElement("button");
-      btn.textContent = cat;
-      btn.className = "cat-pill" + (cat === activeCategory ? " active" : "");
-      btn.addEventListener("click", () => {
-        activeCategory = cat;
-        document.querySelectorAll(".cat-pill").forEach(p => p.classList.remove("active"));
-        btn.classList.add("active");
-        renderArticles();
-      });
-      catListEl.appendChild(btn);
-    });
-  }
+  function renderCategory(cat) {
+    const box = document.getElementById("category-articles");
+    const filtered = allArticles.filter(a => (a.category || "General") === cat);
 
-  function renderArticles() {
-    let list = allArticles;
-    if (activeCategory !== "All") {
-      list = list.filter(a => a.category === activeCategory);
-    }
-    if (!list.length) {
-      articlesEl.innerHTML = "<p>No articles for this category yet.</p>";
+    if (!filtered.length) {
+      box.innerHTML = "<p>No articles in this category yet.</p>";
       return;
     }
-    articlesEl.innerHTML = list.map(a => `
-      <a class="card" href="article.html?slug=${encodeURIComponent(a.slug)}">
-        <div class="card-title">${escapeHtml(a.title)}</div>
-        <div class="card-meta">${a.category || "General"} · ${a.created_at ? new Date(a.created_at).toDateString() : ""}</div>
-      </a>
-    `).join("");
+
+    box.innerHTML = filtered.map(a => {
+      const excerpt = (a.content || "").replace(/<[^>]+>/g, "").slice(0, 120) + (a.content && a.content.length > 120 ? "..." : "");
+      const date = a.created_at ? new Date(a.created_at).toDateString() : "";
+      return `
+        <article class="card">
+          <h2>${escapeHtml(a.title)}</h2>
+          <small>${date}</small>
+          <p>${escapeHtml(excerpt)}</p>
+          <a href="article.html?slug=${encodeURIComponent(a.slug)}">Read more →</a>
+        </article>
+      `;
+    }).join("");
   }
 
   function escapeHtml(str) {
-    return String(str || "").replace(/[&<>"]/g, c => (
-      { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]
-    ));
+    return String(str || "").replace(/[&<>"']/g, c => ({
+      "&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"
+    }[c]));
   }
 
   init();
