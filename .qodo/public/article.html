@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Article</title>
+
+  <style>
+    body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #ffffff; }
+    header { background: #fff; padding: 15px; text-align: center; font-size: 22px; border-bottom: 1px solid #ddd; }
+    .container { max-width: 900px; margin: auto; padding: 20px; }
+    img { max-width: 100%; border-radius: 6px; margin-bottom: 15px; }
+    a { color: #0066cc; }
+  </style>
+</head>
+
+<body>
+
+<header><a href="index.html">← Back</a></header>
+
+<div class="container">
+  <h1 id="title"></h1>
+  <small id="date"></small>
+  <img id="image" style="display:none;">
+  <div id="content" style="margin-top:20px;"></div>
+</div>
+
+<script>
+const slug = new URLSearchParams(window.location.search).get("slug");
+const API = `https://YOUR-WORKER.workers.dev/api/article/${slug}`;
+
+async function loadArticle() {
+  const res = await fetch(API);
+  const article = await res.json();
+
+  if (!article || !article.title) {
+    document.body.innerHTML = "<p>Article not found.</p>";
+    return;
+  }
+
+  document.getElementById("title").innerText = article.title;
+  document.getElementById("date").innerText = new Date(article.created_at).toDateString();
+
+  // If image URL exists
+  if (article.image_url) {
+    document.getElementById("image").src = article.image_url;
+    document.getElementById("image").style.display = "block";
+  }
+
+  document.getElementById("content").innerHTML = article.content;
+}
+
+loadArticle();
+</script>
+
+</body>
+</html>

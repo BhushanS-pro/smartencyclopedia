@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Add Article</title>
+
+<style>
+  body { font-family: Arial; margin: 0; padding: 20px; background: #f9f9f9; }
+  h2 { text-align: center; }
+  .form { max-width: 600px; margin: auto; background: #fff; padding: 20px; border-radius: 8px; border: 1px solid #ddd; }
+  input, textarea { width: 100%; padding: 10px; margin: 8px 0; border-radius: 6px; border: 1px solid #ccc; }
+  button { padding: 12px; width: 100%; background: #0066cc; color: #fff; border: none; border-radius: 6px; cursor: pointer; }
+  button:hover { background: #004a99; }
+</style>
+</head>
+
+<body>
+
+<h2>Add New Article</h2>
+
+<div class="form">
+  <input type="text" id="title" placeholder="Title" required>
+  <input type="text" id="slug" placeholder="Slug (unique)" required>
+  <input type="text" id="category" placeholder="Category">
+  <input type="text" id="image_url" placeholder="Image URL (optional)">
+  <textarea id="content" rows="10" placeholder="Content" required></textarea>
+  <button onclick="submitArticle()">Submit Article</button>
+</div>
+
+<script>
+async function submitArticle() {
+  const article = {
+    title: document.getElementById("title").value,
+    slug: document.getElementById("slug").value,
+    category: document.getElementById("category").value,
+    image_url: document.getElementById("image_url").value,
+    content: document.getElementById("content").value
+  };
+
+  const res = await fetch("https://YOUR-WORKER.workers.dev/api/add-article", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(article)
+  });
+
+  alert(await res.text());
+}
+</script>
+
+</body>
+</html>

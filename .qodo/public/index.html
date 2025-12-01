@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Daily Articles</title>
+
+  <style>
+    body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #f8f8f8; }
+    header { background: #ffffff; padding: 15px; text-align: center; font-size: 24px; border-bottom: 1px solid #ddd; }
+    .container { max-width: 900px; margin: auto; padding: 15px; }
+    .article-card { background: #fff; padding: 15px; margin-bottom: 15px; border-radius: 6px; border: 1px solid #ddd; }
+    .article-card h2 { margin: 0 0 10px 0; }
+    .article-card a { text-decoration: none; color: #0066cc; }
+    .article-card small { color: #777; }
+  </style>
+
+  <!-- Google AdSense placeholder -->
+  <meta name="google-adsense-account" content="YOUR-AD-CODE" />
+</head>
+
+<body>
+
+<header>Daily Articles</header>
+
+<div class="container">
+  <div id="articles">Loading articles...</div>
+</div>
+
+<script>
+const API = "https://YOUR-WORKER.workers.dev/api/articles";
+
+async function loadArticles() {
+  const res = await fetch(API);
+  const data = await res.json();
+
+  if (!data.length) {
+    document.getElementById("articles").innerHTML = "<p>No articles yet.</p>";
+    return;
+  }
+
+  document.getElementById("articles").innerHTML = data
+    .map(a => `
+      <div class="article-card">
+        <h2><a href="article.html?slug=${a.slug}">${a.title}</a></h2>
+        <small>${new Date(a.created_at).toDateString()}</small>
+        <p>${a.content.substring(0, 150)}...</p>
+      </div>
+    `)
+    .join("");
+}
+
+loadArticles();
+</script>
+
+</body>
+</html>
