@@ -5,7 +5,7 @@
   <title>Smart Encyclopedia – Daily Knowledge Articles</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-  <!-- Bootstrap (CDN) -->
+  <!-- Bootstrap -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
 
   <style>
@@ -16,15 +16,15 @@
     .article-card {
       background: #fff;
       border-radius: 12px;
-      overflow: hidden;
       box-shadow: 0 4px 16px rgba(0,0,0,0.05);
+      overflow: hidden;
       transition: transform 0.2s ease-in-out;
-      margin-bottom: 30px;
     }
     .article-card:hover {
-      transform: translateY(-4px);
+      transform: translateY(-5px);
     }
     .card-img-top {
+      width: 100%;
       height: 200px;
       object-fit: cover;
     }
@@ -37,8 +37,8 @@
       }
     }
     .read-more-link {
-      color: #0066ff;
       font-weight: 600;
+      color: #0056ff;
       text-decoration: none;
     }
     .read-more-link:hover {
@@ -56,7 +56,8 @@
     <p class="text-muted">Explore educational articles across science, space, history, technology and more.</p>
   </header>
 
-  <div id="articles-container" class="row g-4"></div>
+  <!-- FIXED GRID LAYOUT: left alignment -->
+  <div id="articles-container" class="row row-cols-1 row-cols-md-3 g-4 justify-content-start"></div>
 
 </div>
 
@@ -66,32 +67,32 @@ async function loadArticles() {
   const data = await res.json();
   const container = document.getElementById("articles-container");
 
-  // 🗓️ Only today's articles visible on homepage
+  // 📌 Show only today's articles on homepage
   const today = new Date().toISOString().split("T")[0];
-  
-  const todayArticles = data.filter(a => 
+
+  const todayArticles = data.filter(a =>
     a.created_at && a.created_at.startsWith(today)
   );
 
-  // If none today → show latest 6
+  // 📌 If no new articles today → show latest 6
   const articlesToShow = todayArticles.length > 0
     ? todayArticles
     : data.slice(0, 6);
 
-  articlesToShow.sort((a, b) => 
+  articlesToShow.sort((a, b) =>
     new Date(b.created_at) - new Date(a.created_at)
   );
 
   container.innerHTML = articlesToShow.map(a => `
-    <div class="col-md-4">
-      <div class="article-card">
+    <div class="col">
+      <div class="article-card h-100 d-flex flex-column">
         <img class="card-img-top" src="${a.image_url || '/images/default.jpg'}" alt="${a.title}">
-        <div class="p-3">
+        <div class="p-3 d-flex flex-column flex-grow-1">
           <small class="text-muted">${a.category} • ${new Date(a.created_at).toLocaleDateString()}</small>
           <h5 class="fw-bold mt-2">${a.title}</h5>
-          <p class="text-muted small">${a.content.substring(0,120)}...</p>
+          <p class="text-muted small flex-grow-1">${a.content.substring(0,120)}...</p>
 
-          <div class="text-end mt-2 border-top pt-2">
+          <div class="text-end border-top pt-2 mt-2">
             <a class="read-more-link" href="article.html?slug=${encodeURIComponent(a.slug)}">
               Read more →
             </a>
