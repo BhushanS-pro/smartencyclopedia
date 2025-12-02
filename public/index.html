@@ -13,156 +13,63 @@
     body {
       background-color: #f5f6fa;
     }
-    .navbar-brand {
-      font-weight: 700;
-      letter-spacing: .03em;
-    }
-    .hero {
-      padding: 2.5rem 1rem 1.5rem;
-    }
-    .hero-title {
-      font-weight: 700;
-      font-size: 1.9rem;
-    }
-    .hero-subtitle {
-      color: #6b7280;
-      max-width: 640px;
-    }
 
-    /* Cards */
     .article-card img {
       width: 100%;
-      height: 200px;
+      height: 220px;
       object-fit: cover;
       object-position: center;
       border-radius: 12px 12px 0 0;
-    }
-
-    .article-card .card-body {
-      display: flex;
-      flex-direction: column;
-    }
-    .article-meta {
-      font-size: .8rem;
-      color: #6b7280;
-      margin-bottom: .35rem;
-    }
-    .article-title {
-      font-size: 1rem;
-      font-weight: 600;
-      margin-bottom: .35rem;
-    }
-    .article-excerpt {
-      font-size: .9rem;
-      color: #4b5563;
-      flex-grow: 1;
-    }
-    .read-more-link {
-      font-size: .85rem;
-      font-weight: 500;
-    }
-
-    /* 📱 Fix spacing on mobile */
-    @media (max-width: 576px) {
-      .article-card {
-        margin-bottom: 1.2rem !important;
-        border-radius: 12px;
-      }
-      .card-img-top {
-        border-radius: 12px 12px 0 0;
-      }
+      background-color: #e6e6e6;
     }
   </style>
 </head>
+
 <body>
 
-  <!-- NAVBAR -->
-  <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm">
-    <div class="container">
-      <a class="navbar-brand" href="index.html">Smart Encyclopedia</a>
-      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNavbar">
-        <span class="navbar-toggler-icon"></span>
-      </button>
-
-      <div class="collapse navbar-collapse" id="mainNavbar">
-        <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
-          <li class="nav-item"><a class="nav-link active" href="index.html">Home</a></li>
-          <li class="nav-item"><a class="nav-link" href="categories.html">Categories</a></li>
-          <li class="nav-item"><a class="nav-link" href="about.html">About</a></li>
-          <li class="nav-item"><a class="nav-link" href="contact.html">Contact</a></li>
-        </ul>
-      </div>
-    </div>
-  </nav>
-
-  <!-- HERO SECTION -->
-  <section class="hero bg-white border-bottom">
-    <div class="container">
-      <h1 class="hero-title mb-2">Daily Knowledge Articles</h1>
-      <p class="hero-subtitle">
-        Explore interesting facts about space, science, Earth, history, technology and more — short, simple, and easy to understand.
-      </p>
-    </div>
-  </section>
-
-  <!-- ARTICLES GRID -->
   <main class="py-4">
     <div class="container">
-      <div class="row g-4" id="articles-grid"></div>
+      <div class="row g-4" id="articles-grid">
+      </div>
     </div>
   </main>
-
-  <!-- Bootstrap Bundle JS -->
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
   <script>
     const API_BASE = "";
 
+    function getDateOnly(dateStr) {
+      return new Date(dateStr).toISOString().split("T")[0];
+    }
+
     async function loadArticles() {
+      const container = document.getElementById("articles-grid");
       try {
         const res = await fetch(`${API_BASE}/api/articles`);
         const data = await res.json();
-        const container = document.getElementById("articles-grid");
+        if (!data.length) return;
 
-        if (!Array.isArray(data) || data.length === 0) {
-          container.innerHTML = `
-            <div class="col-12 text-center text-muted py-5">
-              No articles published yet.
-            </div>`;
-          return;
-        }
-
-        // Filter: show only latest date group
         data.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-        const latestDate = data[0]?.created_at?.split(" ")[0] || "";
-        const filtered = data.filter(a => a.created_at.startsWith(latestDate));
+        const latestDate = getDateOnly(data[0].created_at);
 
-        container.innerHTML = filtered.map(a => {
+        const latestArticles = data.filter(a =>
+          getDateOnly(a.created_at) === latestDate
+        );
+
+        container.innerHTML = latestArticles.map(a => {
           const created = new Date(a.created_at).toLocaleDateString();
-          const category = a.category || "General";
-          const imgSrc = a.image_url && a.image_url.trim()
-            ? a.image_url
-            : "https://via.placeholder.com/600x300?text=Smart+Encyclopedia";
-
-          const plainText = (a.content || "")
-            .replace(/<[^>]+>/g, " ")
-            .replace(/\s+/g, " ")
-            .trim();
-          const excerpt = plainText.length > 130 ? plainText.slice(0, 130) + "…" : plainText;
-
+          const imgSrc = a.image_url || "https://via.placeholder.com/600x300";
+          const text = (a.content || "").replace(/<[^>]+>/g, "").slice(0, 150) + "...";
           return `
             <div class="col-12 col-md-6 col-lg-4">
               <div class="card article-card h-100 shadow-sm border-0">
-                <img src="${imgSrc}" class="card-img-top" alt="${a.title}">
+                <img src="${imgSrc}" alt="${a.title}">
                 <div class="card-body">
-                  <div class="article-meta">${category} • ${created}</div>
-                  <h2 class="article-title">${a.title}</h2>
-                  <p class="article-excerpt">${excerpt}</p>
-                  <div class="text-end mt-3 border-top pt-2">
-                    <a class="read-more-link" href="article.html?slug=${encodeURIComponent(a.slug)}">
-                      Read more →
-                    </a>
-                  </div>
+                  <div class="text-muted small">${a.category || "General"} • ${created}</div>
+                  <h5>${a.title}</h5>
+                  <p>${text}</p>
+                  <a href="article.html?slug=${a.slug}" class="text-primary">
+                    Read more →
+                  </a>
                 </div>
               </div>
             </div>`;

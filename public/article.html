@@ -1,97 +1,64 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>Article – Smart Encyclopedia</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="description" content="Read detailed educational articles on Smart Encyclopedia." />
-  <style>
-    body { margin:0; font-family: Arial, sans-serif; background:#f3f4f6; color:#111827; }
-    header { background:#111827; color:#f9fafb; padding:14px 18px; display:flex; justify-content:space-between; align-items:center; }
-    .logo { font-weight:bold; font-size:20px; }
-    nav a { color:#e5e7eb; margin-left:16px; text-decoration:none; font-size:14px; }
-    nav a:hover { text-decoration:underline; }
-    .container { max-width:800px; margin:20px auto; padding:0 16px; }
-    .meta { font-size:13px; color:#6b7280; margin-bottom:10px; }
-    img.feature { width:100%; max-height:360px; object-fit:cover; border-radius:10px; margin:10px 0 18px; }
-    article { background:#fff; padding:18px 16px; border-radius:10px; box-shadow:0 6px 18px rgba(15,23,42,.08); }
-    article h1 { margin-top:0; font-size:24px; }
-    article p, article li { font-size:15px; line-height:1.6; color:#111827; }
-    footer { margin-top:24px; padding:14px 18px; font-size:13px; color:#6b7280; text-align:center; }
-    footer a { color:#2563eb; text-decoration:none; margin:0 4px; }
-    footer a:hover { text-decoration:underline; }
-  </style>
+<meta charset="UTF-8">
+<title>Article – Smart Encyclopedia</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
+<style>
+  body { background: #f5f6fa; }
+
+  .article-image {
+    width: 100%;
+    max-width: 850px;
+    aspect-ratio: 16/9;
+    height: auto;
+    object-fit: cover;
+    object-position: center;
+    display: block;
+    margin: 0 auto 1.5rem;
+    border-radius: 12px;
+    background-color: #e6e6e6;
+  }
+</style>
 </head>
-<body>
-<header>
-  <div class="logo"><a href="index.html" style="color:#f9fafb;text-decoration:none;">Smart Encyclopedia</a></div>
-  <nav>
-    <a href="index.html">Home</a>
-    <a href="categories.html">Categories</a>
-    <a href="about.html">About</a>
-    <a href="contact.html">Contact</a>
-  </nav>
-</header>
 
-<main class="container">
-  <article id="article">
-    <p>Loading article...</p>
-  </article>
-</main>
+<body class="py-4">
 
-<footer>
-  &copy; <span id="year"></span> Smart Encyclopedia.
-  <a href="privacy.html">Privacy Policy</a>·
-  <a href="terms.html">Terms</a>·
-  <a href="contact.html">Contact</a>
-</footer>
+<div class="container">
+  <a href="index.html" class="small">&larr; Back</a>
+
+  <h1 id="article-title" class="mt-3"></h1>
+  <p class="text-muted" id="article-meta"></p>
+
+  <img id="article-image" class="article-image" alt="">
+
+  <div id="article-content"></div>
+</div>
 
 <script>
-  document.getElementById("year").textContent = new Date().getFullYear();
-
-  const params = new URLSearchParams(window.location.search);
+  const params = new URLSearchParams(location.search);
   const slug = params.get("slug");
+  const API_BASE = "";
 
-  if (!slug) {
-    document.getElementById("article").innerHTML = "<p>Missing article slug.</p>";
-  } else {
-    loadArticle(slug);
+  async function loadArticle() {
+    const res = await fetch(`${API_BASE}/api/article/${slug}`);
+    const a = await res.json();
+
+    document.getElementById("article-title").textContent = a.title;
+    document.getElementById("article-meta").textContent =
+      `${a.category || "General"} • ${new Date(a.created_at).toLocaleDateString()}`;
+
+    document.getElementById("article-image").src =
+      a.image_url || "https://via.placeholder.com/900x500";
+
+    document.getElementById("article-content").innerHTML = a.content;
   }
 
-  async function loadArticle(slug) {
-    try {
-      const res = await fetch("/api/article/" + encodeURIComponent(slug));
-      if (!res.ok) throw new Error("Failed");
-      const a = await res.json();
-      if (!a || !a.title) {
-        document.getElementById("article").innerHTML = "<p>Article not found.</p>";
-        return;
-      }
-
-      const img = a.image_url || "https://via.placeholder.com/800x400?text=Smart+Encyclopedia";
-      const date = a.created_at ? new Date(a.created_at).toDateString() : "";
-      const cat = a.category || "General";
-
-      document.title = a.title + " – Smart Encyclopedia";
-
-      document.getElementById("article").innerHTML = `
-        <div class="meta"><a href="index.html">&larr; Back</a></div>
-        <h1>${escapeHtml(a.title)}</h1>
-        <div class="meta">${escapeHtml(cat)} ${date ? "&middot; " + date : ""}</div>
-        <img src="${img}" class="feature" alt="${escapeHtml(a.title)}">
-        <div class="content">${a.content || ""}</div>
-      `;
-    } catch (err) {
-      document.getElementById("article").innerHTML = "<p>Error loading article.</p>";
-      console.error(err);
-    }
-  }
-
-  function escapeHtml(str) {
-    return String(str || "").replace(/[&<>"']/g, c => ({
-      "&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"
-    }[c]));
-  }
+  loadArticle();
 </script>
+
 </body>
 </html>
