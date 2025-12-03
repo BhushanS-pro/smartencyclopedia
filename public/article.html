@@ -4,60 +4,74 @@
   <meta charset="UTF-8" />
   <title>Article – Smart Encyclopedia</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="description" content="Read detailed educational articles on Smart Encyclopedia." />
+
+  <!-- SEO: Dynamic description & canonical filled via JS -->
+  <meta id="dynamic-description" name="description" content="">
+  <link id="canonical-link" rel="canonical" href="">
+
+  <!-- OpenGraph Meta for Social Sharing -->
+  <meta property="og:type" content="article">
+  <meta property="og:title" id="og-title" content="">
+  <meta property="og:description" id="og-desc" content="">
+  <meta property="og:image" id="og-img" content="">
+  <meta property="og:url" id="og-url" content="">
+
+  <!-- JSON-LD Article Schema (content injected via JS) -->
+  <script id="article-schema" type="application/ld+json"></script>
 
   <style>
-    /* Mobile Nav Fix */
-      @media (max-width: 476px) {
-      nav {
-      display: flex;
-      gap: 6px;
-      }
-      nav a {
-      font-size: 12px;
-      padding: 4px 1px;
-      }
-      }
-
     body { margin:0; font-family: Arial, sans-serif; background:#f3f4f6; color:#111827; }
-    header { background:#111827; color:#f9fafb; padding:14px 18px; display:flex; justify-content:space-between; align-items:center; }
+    header {
+      background:#111827; color:#f9fafb; padding:14px 18px;
+      display:flex; justify-content:space-between; align-items:center;
+    }
     .logo { font-weight:bold; font-size:20px; }
     nav a { color:#e5e7eb; margin-left:16px; text-decoration:none; font-size:14px; }
     nav a:hover { text-decoration:underline; }
+
     .container { max-width:800px; margin:20px auto; padding:0 16px; }
     .meta { font-size:13px; color:#6b7280; margin-bottom:10px; }
 
-    /* Updated image styling */
+    /* Feature image alignment */
     img.feature {
-      width: 100%;
-      max-width: 750px;
-      height: auto;
-      max-height: 360px;
-      object-fit: contain;
-      display: block;
-      margin: 12px auto 20px;
-      border-radius: 10px;
-      background: #fff;
+      width:100%;
+      max-width:750px;
+      height:auto;
+      max-height:360px;
+      object-fit:contain;
+      display:block;
+      margin:12px auto 20px;
+      border-radius:10px;
+      background:#ffffff;
     }
 
-    article { background:#fff; padding:18px 16px; border-radius:10px; box-shadow:0 6px 18px rgba(15,23,42,.08); }
+    article {
+      background:#fff; padding:18px 16px;
+      border-radius:10px; box-shadow:0 6px 18px rgba(15,23,42,.08);
+    }
     article h1 { margin-top:0; font-size:24px; }
     article p, article li { font-size:15px; line-height:1.6; color:#111827; }
 
-    footer { margin-top:24px; padding:14px 18px; font-size:13px; color:#6b7280; text-align:center; }
+    footer {
+      margin-top:24px; padding:14px 18px;
+      font-size:13px; color:#6b7280; text-align:center;
+    }
     footer a { color:#2563eb; text-decoration:none; margin:0 4px; }
     footer a:hover { text-decoration:underline; }
-
   </style>
 </head>
 <body>
+
 <header>
-  <div class="logo"><a href="index.html" style="color:#f9fafb;text-decoration:none;">Smart Encyclopedia</a></div>
+  <div class="logo">
+    <a href="index.html" style="color:#f9fafb;text-decoration:none;">Smart Encyclopedia</a>
+  </div>
   <nav>
     <a href="index.html">Home</a>
-    <a href="categories.html">Categories</a>
     <a href="about.html">About</a>
     <a href="contact.html">Contact</a>
+    <a href="privacy.html">Privacy</a>
+    <a href="terms.html">Terms</a>
   </nav>
 </header>
 
@@ -80,21 +94,80 @@
   const params = new URLSearchParams(window.location.search);
   const slug = params.get("slug");
 
-  if (!slug) document.getElementById("article").innerHTML = "<p>Missing article slug.</p>";
-  else loadArticle(slug);
+  if (!slug) {
+    document.getElementById("article").innerHTML = "<p>Missing article slug.</p>";
+  } else {
+    loadArticle(slug);
+  }
 
   async function loadArticle(slug) {
     try {
       const res = await fetch("/api/article/" + encodeURIComponent(slug));
+      if (!res.ok) throw new Error("Request failed");
       const a = await res.json();
-      if (!a.title) return document.getElementById("article").innerHTML = "<p>Article not found.</p>";
+
+      if (!a || !a.title) {
+        document.getElementById("article").innerHTML = "<p>Article not found.</p>";
+        return;
+      }
 
       const img = a.image_url || "https://via.placeholder.com/800x400?text=Smart+Encyclopedia";
       const date = a.created_at ? new Date(a.created_at).toDateString() : "";
       const cat = a.category || "General";
 
+      // Set page title
       document.title = a.title + " – Smart Encyclopedia";
 
+      // Generate plain text excerpt from HTML content
+      const plain = (a.content || "").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+      const excerpt = plain.slice(0, 160);
+
+      // Dynamic meta description + canonical
+      const descMeta = document.getElementById("dynamic-description");
+      const canonicalLink = document.getElementById("canonical-link");
+
+      if (descMeta) descMeta.content = excerpt;
+      if (canonicalLink) {
+        canonicalLink.href = `https://smartencyclopedia.pages.dev/article.html?slug=${encodeURIComponent(slug)}`;
+      }
+
+      // OpenGraph meta tags
+      document.getElementById("og-title").content = a.title;
+      document.getElementById("og-desc").content = excerpt;
+      document.getElementById("og-img").content = img;
+      document.getElementById("og-url").content =
+        `https://smartencyclopedia.pages.dev/article.html?slug=${encodeURIComponent(slug)}`;
+
+      // JSON-LD Structured Data for Article
+      const articleSchema = {
+        "@context": "https://schema.org",
+        "@type": "Article",
+        "headline": a.title,
+        "description": excerpt,
+        "image": img,
+        "author": {
+          "@type": "Organization",
+          "name": "Smart Encyclopedia"
+        },
+        "publisher": {
+          "@type": "Organization",
+          "name": "Smart Encyclopedia",
+          "logo": {
+            "@type": "ImageObject",
+            "url": "https://smartencyclopedia.pages.dev/images/favicon.png"
+          }
+        },
+        "datePublished": a.created_at || new Date().toISOString(),
+        "dateModified": a.created_at || new Date().toISOString(),
+        "mainEntityOfPage": {
+          "@type": "WebPage",
+          "@id": `https://smartencyclopedia.pages.dev/article.html?slug=${encodeURIComponent(slug)}`
+        }
+      };
+      document.getElementById("article-schema").textContent =
+        JSON.stringify(articleSchema);
+
+      // Render article HTML
       document.getElementById("article").innerHTML = `
         <div class="meta"><a href="index.html">&larr; Back</a></div>
         <h1>${escapeHtml(a.title)}</h1>
@@ -102,13 +175,15 @@
         <img src="${img}" class="feature" alt="${escapeHtml(a.title)}">
         <div class="content">${a.content || ""}</div>
       `;
-    } catch {
+
+    } catch (err) {
+      console.error(err);
       document.getElementById("article").innerHTML = "<p>Error loading article.</p>";
     }
   }
 
   function escapeHtml(str) {
-    return String(str).replace(/[&<>"']/g, c => ({
+    return String(str || "").replace(/[&<>"']/g, c => ({
       "&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"
     }[c]));
   }
