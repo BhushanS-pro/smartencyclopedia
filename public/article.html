@@ -5,18 +5,18 @@
   <title>Article – Smart Encyclopedia</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-  <!-- SEO: Dynamic description & canonical filled via JS -->
+  <!-- SEO: Dynamic description + Canonical -->
   <meta id="dynamic-description" name="description" content="">
   <link id="canonical-link" rel="canonical" href="">
 
-  <!-- OpenGraph Meta for Social Sharing -->
+  <!-- OpenGraph Meta -->
   <meta property="og:type" content="article">
   <meta property="og:title" id="og-title" content="">
   <meta property="og:description" id="og-desc" content="">
   <meta property="og:image" id="og-img" content="">
   <meta property="og:url" id="og-url" content="">
 
-  <!-- JSON-LD Article Schema (content injected via JS) -->
+  <!-- JSON-LD Article Schema -->
   <script id="article-schema" type="application/ld+json"></script>
 
   <style>
@@ -32,10 +32,9 @@
     .container { max-width:800px; margin:20px auto; padding:0 16px; }
     .meta { font-size:13px; color:#6b7280; margin-bottom:10px; }
 
-    /* Feature image alignment */
+    /* 🔥 Faster Image Loading + Perfect Alignment */
     img.feature {
       width:100%;
-      max-width:750px;
       height:auto;
       max-height:360px;
       object-fit:contain;
@@ -43,6 +42,7 @@
       margin:12px auto 20px;
       border-radius:10px;
       background:#ffffff;
+      loading:lazy;
     }
 
     article {
@@ -115,45 +115,32 @@
       const date = a.created_at ? new Date(a.created_at).toDateString() : "";
       const cat = a.category || "General";
 
-      // Set page title
       document.title = a.title + " – Smart Encyclopedia";
 
-      // Generate plain text excerpt from HTML content
       const plain = (a.content || "").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
       const excerpt = plain.slice(0, 160);
 
-      // Dynamic meta description + canonical
-      const descMeta = document.getElementById("dynamic-description");
-      const canonicalLink = document.getElementById("canonical-link");
+      document.getElementById("dynamic-description").content = excerpt;
+      document.getElementById("canonical-link").href =
+        `https://smartencyclopedia.pages.dev/article.html?slug=${encodeURIComponent(slug)}`;
 
-      if (descMeta) descMeta.content = excerpt;
-      if (canonicalLink) {
-        canonicalLink.href = `https://smartencyclopedia.pages.dev/article.html?slug=${encodeURIComponent(slug)}`;
-      }
-
-      // OpenGraph meta tags
       document.getElementById("og-title").content = a.title;
       document.getElementById("og-desc").content = excerpt;
       document.getElementById("og-img").content = img;
       document.getElementById("og-url").content =
         `https://smartencyclopedia.pages.dev/article.html?slug=${encodeURIComponent(slug)}`;
 
-      // JSON-LD Structured Data for Article
       const articleSchema = {
         "@context": "https://schema.org",
         "@type": "Article",
         "headline": a.title,
         "description": excerpt,
         "image": img,
-        "author": {
-          "@type": "Organization",
-          "name": "Smart Encyclopedia"
-        },
+        "author": { "@type": "Organization", "name": "Smart Encyclopedia" },
         "publisher": {
           "@type": "Organization",
           "name": "Smart Encyclopedia",
-          "logo": {
-            "@type": "ImageObject",
+          "logo": { "@type": "ImageObject",
             "url": "https://smartencyclopedia.pages.dev/images/favicon.png"
           }
         },
@@ -167,12 +154,19 @@
       document.getElementById("article-schema").textContent =
         JSON.stringify(articleSchema);
 
-      // Render article HTML
       document.getElementById("article").innerHTML = `
         <div class="meta"><a href="index.html">&larr; Back</a></div>
         <h1>${escapeHtml(a.title)}</h1>
         <div class="meta">${escapeHtml(cat)} ${date ? "&middot; " + date : ""}</div>
-        <img src="${img}" class="feature" alt="${escapeHtml(a.title)}">
+
+        <img src="${img}"
+          class="feature"
+          alt="${escapeHtml(a.title)}"
+          width="800"
+          height="400"
+          loading="lazy"
+        >
+
         <div class="content">${a.content || ""}</div>
       `;
 
