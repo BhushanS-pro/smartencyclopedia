@@ -282,6 +282,52 @@
         </td>`;
       tbody.appendChild(tr);
     });
+
+    renderPagination();
+  }
+
+  function renderPagination() {
+    const pagination = document.getElementById("pagination");
+    pagination.innerHTML = "";
+
+    const totalPages = Math.ceil(allArticles.length / pageSize);
+    if (totalPages <= 1) return;
+
+    // Previous button
+    const prev = document.createElement("button");
+    prev.textContent = "« Prev";
+    prev.disabled = currentPage === 1;
+    prev.addEventListener("click", () => {
+      if (currentPage > 1) {
+        currentPage--;
+        renderArticles();
+      }
+    });
+    pagination.appendChild(prev);
+
+    // Page numbers
+    for (let i = 1; i <= totalPages; i++) {
+      const btn = document.createElement("button");
+      btn.textContent = i;
+      btn.className = i === currentPage ? "active" : "";
+      btn.addEventListener("click", () => {
+        currentPage = i;
+        renderArticles();
+      });
+      pagination.appendChild(btn);
+    }
+
+    // Next button
+    const next = document.createElement("button");
+    next.textContent = "Next »";
+    next.disabled = currentPage === totalPages;
+    next.addEventListener("click", () => {
+      if (currentPage < totalPages) {
+        currentPage++;
+        renderArticles();
+      }
+    });
+    pagination.appendChild(next);
   }
 
   window.onEdit = async (slug) => {
